@@ -1,5 +1,10 @@
 //! TODO
 
+
+#[cfg(test)]
+mod tests;
+
+
 #[cfg(feature = "hot-reloading")]
 use crate::{
     Asset,
@@ -37,7 +42,7 @@ pub trait Source {
 
 impl<S> Source for Box<S>
 where
-    S: Source
+    S: Source + ?Sized,
 {
     fn read(&self, id: &str, ext: &str) -> io::Result<Cow<[u8]>> {
         self.as_ref().read(id, ext)
@@ -53,7 +58,7 @@ pub trait DirSource: Source {
 
 impl<S> DirSource for Box<S>
 where
-    S: DirSource
+    S: DirSource + ?Sized,
 {
     fn read_dir(&self, dir: &str, ext: &[&str]) -> io::Result<Vec<String>> {
         self.as_ref().read_dir(dir, ext)
@@ -233,16 +238,5 @@ impl Error for CacheError {
             #[cfg(feature = "hot-reloading")]
             ErrorKind::Notify(err) => Some(err),
         }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn source_object_safe() {
-        let s = FileSystem::new(".").unwrap();
-        let _: &dyn Source = &s;
     }
 }
